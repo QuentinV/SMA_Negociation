@@ -10,12 +10,23 @@ public class Client {
     private String destination;
     private Date dateAchatMax;
 
-    public Client(List<String> companiesFav, List<String> companiesNotFav, double budget, String destination, Date dateAchatMax) {
+    private Strategie strat;
+
+    public Client(List<String> companiesFav, List<String> companiesNotFav, double budget, String destination, Date dateAchatMax, Strategie strat) {
         this.companiesFav = companiesFav;
         this.companiesNotFav = companiesNotFav;
         this.budget = budget;
         this.destination = destination;
         this.dateAchatMax = dateAchatMax;
+        this.strat = strat;
+    }
+
+    public Strategie getStrat() {
+        return strat;
+    }
+
+    public void setStrat(Strategie strat) {
+        this.strat = strat;
     }
 
     public List<String> getCompaniesFav() {
