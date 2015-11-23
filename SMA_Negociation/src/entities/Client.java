@@ -1,18 +1,18 @@
-package main;
+package entities;
 
 import java.util.Date;
 import java.util.List;
 
 public class Client {
-    private List<String> companiesFav;
-    private List<String> companiesNotFav;
+    private List<Compagnie> companiesFav;
+    private List<Compagnie> companiesNotFav;
     private double budget;
-    private String destination;
+    private Destination destination;
     private Date dateAchatMax;
 
     private Strategie strat;
 
-    public Client(List<String> companiesFav, List<String> companiesNotFav, double budget, String destination, Date dateAchatMax, Strategie strat) {
+    public Client(List<Compagnie> companiesFav, List<Compagnie> companiesNotFav, double budget, Destination destination, Date dateAchatMax, Strategie strat) {
         this.companiesFav = companiesFav;
         this.companiesNotFav = companiesNotFav;
         this.budget = budget;
@@ -29,22 +29,6 @@ public class Client {
         this.strat = strat;
     }
 
-    public List<String> getCompaniesFav() {
-        return companiesFav;
-    }
-
-    public void setCompaniesFav(List<String> companiesFav) {
-        this.companiesFav = companiesFav;
-    }
-
-    public List<String> getCompaniesNotFav() {
-        return companiesNotFav;
-    }
-
-    public void setCompaniesNotFav(List<String> companiesNotFav) {
-        this.companiesNotFav = companiesNotFav;
-    }
-
     public double getBudget() {
         return budget;
     }
@@ -53,11 +37,11 @@ public class Client {
         this.budget = budget;
     }
 
-    public String getDestination() {
+    public Destination getDestination() {
         return destination;
     }
 
-    public void setDestination(String destination) {
+    public void setDestination(Destination destination) {
         this.destination = destination;
     }
 
@@ -67,5 +51,17 @@ public class Client {
 
     public void setDateAchatMax(Date dateAchatMax) {
         this.dateAchatMax = dateAchatMax;
+    }
+
+    public boolean checkFavComp(String name)
+    {
+        if (name == null) return false;
+        return companiesFav.contains(new Compagnie(name, 0));
+    }
+
+    public boolean checkNotFavComp(String name)
+    {
+        if (name == null) return false;
+        return companiesNotFav.contains(new Compagnie(name, 0));
     }
 }
