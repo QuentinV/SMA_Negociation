@@ -1,6 +1,7 @@
 package entities;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 public class Compagnie {
@@ -13,6 +14,8 @@ public class Compagnie {
     {
         this.maxPercentNegoc = maxPercentNegoc;
         this.nom = nom;
+
+        this.nbBillets = new HashMap<>();
     }
 
     public double getMaxPercentNegoc()
@@ -32,8 +35,8 @@ public class Compagnie {
     {
         for (Map.Entry<Billet, Integer> e : nbBillets.entrySet())
             if (e.getValue() > 0 && e.getKey().getDestination() == destination
-                    && e.getKey().getDateSouhaite().getTime() >= now.getTime()
-                    && e.getKey().getDateMiseEnVenteMax().getTime() < now.getTime())
+                    && e.getKey().getDateSouhaite().getTime() <= now.getTime()
+                    && e.getKey().getDateMiseEnVenteMax().getTime() > now.getTime())
             {
                 nbBillets.put(e.getKey(), e.getValue()-1); //on enleve un billet
                 return e.getKey();

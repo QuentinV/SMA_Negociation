@@ -27,11 +27,6 @@ public class AgFournisseur extends Agent {
         this.percentDimPrix = percentDimPrix;
     }
 
-    public void addNegociateur(AgNegociateur neg)
-    {
-        this.negociateurs.put(neg,null);
-    }
-
     public String getCompanyName()
     {
         return this.compagnie.getNom();
@@ -47,7 +42,7 @@ public class AgFournisseur extends Agent {
         {//envoyer offre au client et sauvegarder le billet
             long timeMax = b.getDateMiseEnVenteMax().getTime() / 1000;
             long tn = timeNow/1000;
-            double prix = b.getPrixBase() * ((double)timeMax / (double) timeNow) * compagnie.getMaxPercentNegoc();
+            double prix = Math.round(b.getPrixBase() - b.getPrixBase() * ((double)timeMax / (double) timeNow) * (100-compagnie.getMaxPercentNegoc()));
 
             messageToSent = new Message(
                     this,
@@ -62,6 +57,8 @@ public class AgFournisseur extends Agent {
 
             negociateurs.put(neg, m);
             negBillets.put(neg, b);
+
+            this.console("Envoi offer to "+m.getEmetteur()+" = "+String.valueOf(prix));
         } else
         {
             //pas le billet
@@ -75,6 +72,8 @@ public class AgFournisseur extends Agent {
                             m.getContent().getDestination()
                     )
             );
+
+            this.console("No billet available envoi refus to "+m.getEmetteur());
         }
 
         MailBox.send(messageToSent);
@@ -93,10 +92,14 @@ public class AgFournisseur extends Agent {
                 )
         );
         MailBox.send(messageToSent);
+
+        this.console("Envoi refus to "+m.getEmetteur());
     }
 
     @Override
     public void run() {
+        this.console("HELLO");
+
         for (;;)
         {
             final long timeNow = System.currentTimeMillis();
@@ -112,6 +115,8 @@ public class AgFournisseur extends Agent {
                     compagnie.deposerBillet(negBillets.get(neg)); //remettre le billet en vente
                     negociateurs.remove(neg); //suppr message
                     negBillets.remove(neg); //suppr billet
+
+                    this.console("Refus from client "+neg);
                 } else if (m.getContent().getAction() == Action.ACCEPTATION)
                 { //ACCEPTATION DU CLIENT
                     //verification acceptation
@@ -132,6 +137,8 @@ public class AgFournisseur extends Agent {
 
                         negociateurs.remove(neg); //suppr message
                         negBillets.remove(neg); //suppr billet
+
+                        this.console("Acceptation from client "+neg+" pour "+m.getContent().getOffreClient());
                     } else
                     { //Ne pas accepter n'importe qu'elle offre
                         this.sendRefus(neg, m, timeNow);
@@ -139,6 +146,8 @@ public class AgFournisseur extends Agent {
                         compagnie.deposerBillet(negBillets.get(neg)); //remettre le billet en vente
                         negociateurs.remove(neg); //suppr message
                         negBillets.remove(neg); //suppr billet
+
+                        this.console("False acceptation from "+neg+" = REFUS");
                     }
                 } else
                 { //DEMANDE, CONTRE OFFRE
@@ -165,7 +174,7 @@ public class AgFournisseur extends Agent {
                                 double diff = offreBase - coClient; //offre client tjs inférieure
 
                                 //diminuer l'offre de base de 20% selon l'écart entre les offres
-                                double co = offreBase - diff * percentDimPrix / 100;
+                                double co = Math.round(offreBase - diff * 20 / 100);
 
                                 Message messageToSent = new Message(
                                         this,
@@ -178,6 +187,8 @@ public class AgFournisseur extends Agent {
                                         )
                                 );
                                 MailBox.send(messageToSent);
+
+                                this.console("Envoi contre offre "+String.valueOf(co)+" to "+m.getEmetteur());
                             }
                         }
                     } else

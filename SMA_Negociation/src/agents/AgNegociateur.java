@@ -6,27 +6,29 @@ import communication.Message;
 import communication.MessageContent;
 import entities.Client;
 
-import java.util.AbstractMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class AgNegociateur extends Agent {
     private int SLEEP_TIME = 1000;
     private Client c;
+    private List<AgFournisseur> baseFournisseurs;
     private Map<AgFournisseur, Message> fournisseurs;
 
     private double percentAugmPrix;
     private boolean startNegociation;
 
-    public AgNegociateur(Client c, double percentAugmPrix) {
+    public AgNegociateur(Client c, double percentAugmPrix, List<AgFournisseur> env) {
         this.c = c;
         this.startNegociation = false;
         this.percentAugmPrix = percentAugmPrix;
+        this.fournisseurs = new HashMap<>();
+        this.baseFournisseurs = env;
     }
 
-    public void addFournisseur(AgFournisseur ag)
+    public void setBaseFournisseurs(List<AgFournisseur> baseFournisseurs)
     {
-        fournisseurs.put(ag, null);
+        this.baseFournisseurs = baseFournisseurs;
     }
 
     private boolean sendMess(Agent destination, Action a, double offreFournisseur, double monOffre)
@@ -70,6 +72,7 @@ public class AgNegociateur extends Agent {
         fournisseurs.remove(f);
 
         this.sendMess(f, Action.ACCEPTATION, offre, offre); //envoi acceptation
+        this.console("Acceptation offre "+offre+" du f "+f);
 
         for (Entry<AgFournisseur, Message> fo : fournisseurs.entrySet())
             this.sendMess(
@@ -82,6 +85,8 @@ public class AgNegociateur extends Agent {
 
     @Override
     public void run() {
+        this.console("HELLO");
+
         for (;;)
         {
             //ARRET
@@ -91,7 +96,7 @@ public class AgNegociateur extends Agent {
                 if (e != null)
                     this.acceptOffer(e.getKey());
                 else
-                    System.out.println("Date achat passé - Aucun fournisseur");
+                    this.console("Date achat passé - Aucun fournisseur");
 
                 break;
             }
@@ -108,13 +113,15 @@ public class AgNegociateur extends Agent {
                 if (m.getContent().getAction() == Action.REFUS)
                 {
                     fournisseurs.remove(f);
-                    System.out.println(c+" >> refus fournisseur "+f);
+                    this.console("refus fournisseur " + f);
                 } else
                 { //OFFRE ou CONTRE-OFFRE
                     Message old = fournisseurs.get(m.getEmetteur());
                     if (old == null || (old != null && (old.getContent().getDestination() == m.getContent().getDestination()
                             && m.getContent().getOffreFournisseur() <= old.getContent().getOffreFournisseur())))
                     { //old == null => OFFRE
+                        fournisseurs.put(f, m); //sauvegarder message
+
                         double prixSeuil = c.getBudget() * c.getMaxPercentNegoc() / 100; // seuil acceptation du prix
                         if (m.getContent().getOffreFournisseur() <= prixSeuil)
                         { //on accepte l'offre du fournisseur
@@ -122,19 +129,19 @@ public class AgNegociateur extends Agent {
                             break; //fin negociation
                         } else
                         { //on envoi un contre offre
-                            fournisseurs.put(f, m); //sauvegarder message
 
                             double prix = 0;
                             switch (m.getContent().getAction())
                             {
                                 case OFFRE:
-                                    prix = prixSeuil;
+                                    prix = Math.round(prixSeuil);
+                                    this.console("Traitement offre from "+f+" envoi seuil "+String.valueOf(prix));
                                     break;
                                 case CONTRE_OFFRE:
                                     double diff = m.getContent().getOffreFournisseur() - m.getContent().getOffreClient();
-
                                     //augmentation de l'offre de base
-                                    prix = m.getContent().getOffreClient() + this.percentAugmPrix * diff / 100;
+                                    prix = Math.round(m.getContent().getOffreClient() + this.percentAugmPrix * diff / 100);
+                                    this.console("Traitement contre offre from "+f+" = "+String.valueOf(prix));
                                     break;
                             }
 
@@ -145,13 +152,17 @@ public class AgNegociateur extends Agent {
             } else {
                 if (!this.startNegociation)
                 {
+                    if (baseFournisseurs.isEmpty())
+                        break;
+
                     //si on est pas en negociation - Envoyer demande à tous les fournisseurs
                     boolean check = false;
-                    for (Entry<AgFournisseur, Message> agF : fournisseurs.entrySet())
+                    for (AgFournisseur agF : baseFournisseurs)
                     {
-                        if (c.checkFavComp(agF.getKey().getCompanyName()))
+                        if (c.checkCompagnie(agF.getCompanyName()))
                         {
-                            this.sendMess(agF.getKey(), Action.DEMANDE, 0, 0);
+                            this.sendMess(agF, Action.DEMANDE, 0, 0);
+                            this.console("Envoi demande to "+agF);
                             check = true;
                         }
                     }
@@ -166,6 +177,12 @@ public class AgNegociateur extends Agent {
                 e.printStackTrace();
             }
         }
-        System.out.println(c+" >> END negociation");
+        this.console("END Negociation");
+    }
+
+    @Override
+    public String toString()
+    {
+        return c.toString();
     }
 }

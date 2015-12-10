@@ -4,8 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 public class Client {
-    private List<Compagnie> companiesFav;
-    private List<Compagnie> companiesNotFav;
+    private List<Compagnie> companiesAvoid;
 
     private double budget;
     private double maxPercentNegoc;
@@ -16,14 +15,12 @@ public class Client {
     private String nom;
 
     public Client(String nom,
-                  List<Compagnie> companiesFav,
-                  List<Compagnie> companiesNotFav,
+                  List<Compagnie> companiesAvoid,
                   double budget,
                   double maxPercentNegoc,
                   Destination destination,
                   Date dateAchatMax) {
-        this.companiesFav = companiesFav;
-        this.companiesNotFav = companiesNotFav;
+        this.companiesAvoid = companiesAvoid;
         this.budget = budget;
         this.destination = destination;
         this.dateAchatMax = dateAchatMax;
@@ -66,16 +63,10 @@ public class Client {
         this.dateAchatMax = dateAchatMax;
     }
 
-    public boolean checkFavComp(String name)
+    public boolean checkCompagnie(String name)
     {
         if (name == null) return false;
-        return companiesFav.contains(new Compagnie(name, 0));
-    }
-
-    public boolean checkNotFavComp(String name)
-    {
-        if (name == null) return false;
-        return companiesNotFav.contains(new Compagnie(name, 0));
+        return !companiesAvoid.contains(new Compagnie(name, 0));
     }
 
     @Override
