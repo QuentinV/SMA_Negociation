@@ -8,16 +8,23 @@ import entities.Billet;
 import entities.Compagnie;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 public class AgFournisseur extends Agent {
     private int SLEEP_TIME = 500;
     private Compagnie compagnie;
 
-    private Map<AgNegociateur, Message> negociateurs;
+    private Map<AgNegociateur, Message> negociateurs;   //sauvegarde des messages
+    private Map<AgNegociateur, Billet> negBillets;      //sauvegarde billet en cours de negociation
 
-    public AgFournisseur(Compagnie compagnie) {
+    private double percentDimPrix;
+
+    public AgFournisseur(Compagnie compagnie, double percentDimPrix) {
+        this.negociateurs = new HashMap<>();
+        this.negBillets = new HashMap<>();
         this.compagnie = compagnie;
+        this.percentDimPrix = percentDimPrix;
     }
 
     public void addNegociateur(AgNegociateur neg)
@@ -30,16 +37,62 @@ public class AgFournisseur extends Agent {
         return this.compagnie.getNom();
     }
 
-    private double calculOffre(Date now, Billet b, double lastOffreF, double lastOffreC)
+    private void doDemand(AgNegociateur neg, Message m, long timeNow)
     {
-        if (0 == lastOffreF)
-        {
+        //trouver le billet
+        Billet b = compagnie.retirerBillet(m.getContent().getDestination(), new Date(timeNow));
+
+        Message messageToSent = null;
+        if (b != null)
+        {//envoyer offre au client et sauvegarder le billet
             long timeMax = b.getDateMiseEnVenteMax().getTime() / 1000;
-            long timeNow = now.getTime()/1000;
-            return b.getPrixBase() * ((double)timeMax / (double) timeNow) * compagnie.getMaxPercentNegoc();
+            long tn = timeNow/1000;
+            double prix = b.getPrixBase() * ((double)timeMax / (double) timeNow) * compagnie.getMaxPercentNegoc();
+
+            messageToSent = new Message(
+                    this,
+                    m.getEmetteur(),
+                    new MessageContent(
+                            Action.OFFRE,
+                            prix,
+                            0,
+                            m.getContent().getDestination()
+                    )
+            );
+
+            negociateurs.put(neg, m);
+            negBillets.put(neg, b);
+        } else
+        {
+            //pas le billet
+            messageToSent = new Message(
+                    this,
+                    m.getEmetteur(),
+                    new MessageContent(
+                            Action.REFUS,
+                            0,
+                            0,
+                            m.getContent().getDestination()
+                    )
+            );
         }
 
-        return 0;
+        MailBox.send(messageToSent);
+    }
+
+    private void sendRefus(AgNegociateur neg, Message m, long timeNow)
+    {
+        Message messageToSent = new Message(
+                this,
+                m.getEmetteur(),
+                new MessageContent(
+                        Action.CONTRE_OFFRE,
+                        0,
+                        0,
+                        m.getContent().getDestination()
+                )
+        );
+        MailBox.send(messageToSent);
     }
 
     @Override
@@ -52,53 +105,85 @@ public class AgFournisseur extends Agent {
 
             if (m != null && m.getContent() != null)
             {
-                //sauvegarder message
-                Message old = negociateurs.get(m.getEmetteur());
-                if (old != null)
-                {
-                    if (old.getContent().getDestination() == m.getContent().getDestination()
-                            && m.getContent().getOffreClient() <= old.getContent().getOffreClient())
-                        negociateurs.put((AgNegociateur) m.getEmetteur(), m);
+                AgNegociateur neg = (AgNegociateur)m.getEmetteur();
 
-                } else if (m.getContent().getAction() == Action.DEMANDE)
-                {
-                    negociateurs.put((AgNegociateur)m.getEmetteur(), m);
-
-                    //trouver le billet
-                    Billet b = compagnie.getBillet(m.getContent().getDestination(), new Date(timeNow));
-
-                    Message messageToSent = null;
-                    if (b != null)
-                    {
-                        //envoyer offre
-                        messageToSent = new Message(
+                if (m.getContent().getAction() == Action.REFUS)
+                { //REFUS
+                    compagnie.deposerBillet(negBillets.get(neg)); //remettre le billet en vente
+                    negociateurs.remove(neg); //suppr message
+                    negBillets.remove(neg); //suppr billet
+                } else if (m.getContent().getAction() == Action.ACCEPTATION)
+                { //ACCEPTATION DU CLIENT
+                    //verification acceptation
+                    Message old = negociateurs.get(neg);
+                    if (old.getContent().getOffreFournisseur() <= m.getContent().getOffreClient())
+                    { //Accepter l'offre si supérieure à la précédente offre
+                        Message messageToSent = new Message(
                                 this,
                                 m.getEmetteur(),
                                 new MessageContent(
-                                        Action.OFFRE,
-                                        calculOffre(new Date(timeNow),
-                                                b,
-                                                0,
-                                                0),
-                                        0,
+                                        Action.VERIF_ACCEPT,
+                                        m.getContent().getOffreClient(),
+                                        m.getContent().getOffreClient(),
                                         m.getContent().getDestination()
                                 )
                         );
-                    } else {
-                        //envoyer offre
-                        messageToSent = new Message(
-                                this,
-                                m.getEmetteur(),
-                                new MessageContent(
-                                        Action.REFUS,
-                                        0,
-                                        0,
-                                        m.getContent().getDestination()
-                                )
-                        );
+                        MailBox.send(messageToSent);
+
+                        negociateurs.remove(neg); //suppr message
+                        negBillets.remove(neg); //suppr billet
+                    } else
+                    { //Ne pas accepter n'importe qu'elle offre
+                        this.sendRefus(neg, m, timeNow);
+
+                        compagnie.deposerBillet(negBillets.get(neg)); //remettre le billet en vente
+                        negociateurs.remove(neg); //suppr message
+                        negBillets.remove(neg); //suppr billet
                     }
+                } else
+                { //DEMANDE, CONTRE OFFRE
+                    Message old = negociateurs.get(neg);
+                    if (old == null && m.getContent().getAction() == Action.DEMANDE)
+                    { //traiter DEMANDE
+                        this.doDemand(neg, m, timeNow);
+                    } else if (old.getContent().getDestination() == m.getContent().getDestination()
+                            && m.getContent().getOffreClient() >= old.getContent().getOffreClient())
+                    { //contre offre
+                         if (m.getContent().getAction() == Action.CONTRE_OFFRE) {
+                            negociateurs.put(neg, m);//sauvegarder message
 
-                    MailBox.send(messageToSent);
+                            Billet b = negBillets.get(neg);
+
+                            double seuil = compagnie.getMaxPercentNegoc() * b.getPrixBase() / 100;
+                            if (m.getContent().getOffreClient() < seuil)
+                            { //CONTRE OFFRE trop basse
+                                this.sendRefus(neg, m, timeNow);
+                            } else
+                            { //Remonter prix
+                                double offreBase = m.getContent().getOffreFournisseur();
+                                double coClient = m.getContent().getOffreClient();
+                                double diff = offreBase - coClient; //offre client tjs inférieure
+
+                                //diminuer l'offre de base de 20% selon l'écart entre les offres
+                                double co = offreBase - diff * percentDimPrix / 100;
+
+                                Message messageToSent = new Message(
+                                        this,
+                                        m.getEmetteur(),
+                                        new MessageContent(
+                                            Action.CONTRE_OFFRE,
+                                            co,
+                                            m.getContent().getOffreClient(),
+                                            m.getContent().getDestination()
+                                        )
+                                );
+                                MailBox.send(messageToSent);
+                            }
+                        }
+                    } else
+                    { //ENVOI REFUS le client a descendu son offre de base
+                        this.sendRefus(neg, m, timeNow);
+                    }
                 }
             }
 
@@ -110,5 +195,11 @@ public class AgFournisseur extends Agent {
                 e.printStackTrace();
             }
         }
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.getCompanyName();
     }
 }

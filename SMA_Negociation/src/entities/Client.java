@@ -6,27 +6,40 @@ import java.util.List;
 public class Client {
     private List<Compagnie> companiesFav;
     private List<Compagnie> companiesNotFav;
+
     private double budget;
+    private double maxPercentNegoc;
+
     private Destination destination;
     private Date dateAchatMax;
 
-    private Strategie strat;
+    private String nom;
 
-    public Client(List<Compagnie> companiesFav, List<Compagnie> companiesNotFav, double budget, Destination destination, Date dateAchatMax, Strategie strat) {
+    public Client(String nom,
+                  List<Compagnie> companiesFav,
+                  List<Compagnie> companiesNotFav,
+                  double budget,
+                  double maxPercentNegoc,
+                  Destination destination,
+                  Date dateAchatMax) {
         this.companiesFav = companiesFav;
         this.companiesNotFav = companiesNotFav;
         this.budget = budget;
         this.destination = destination;
         this.dateAchatMax = dateAchatMax;
-        this.strat = strat;
+
+        this.nom = nom;
+        this.maxPercentNegoc = maxPercentNegoc;
     }
 
-    public Strategie getStrat() {
-        return strat;
+    public double getMaxPercentNegoc()
+    {
+        return maxPercentNegoc;
     }
 
-    public void setStrat(Strategie strat) {
-        this.strat = strat;
+    public void setMaxPercentNegoc(double maxPercentNegoc)
+    {
+        this.maxPercentNegoc = maxPercentNegoc;
     }
 
     public double getBudget() {
@@ -63,5 +76,11 @@ public class Client {
     {
         if (name == null) return false;
         return companiesNotFav.contains(new Compagnie(name, 0));
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.nom;
     }
 }

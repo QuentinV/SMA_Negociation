@@ -28,15 +28,26 @@ public class Compagnie {
         this.nom = nom;
     }
 
-    public Billet getBillet(Destination destination, Date now)
+    public Billet retirerBillet(Destination destination, Date now)
     {
         for (Map.Entry<Billet, Integer> e : nbBillets.entrySet())
             if (e.getValue() > 0 && e.getKey().getDestination() == destination
                     && e.getKey().getDateSouhaite().getTime() >= now.getTime()
                     && e.getKey().getDateMiseEnVenteMax().getTime() < now.getTime())
+            {
+                nbBillets.put(e.getKey(), e.getValue()-1); //on enleve un billet
                 return e.getKey();
+            }
 
         return null;
+    }
+
+    public void deposerBillet(Billet b)
+    {
+        Integer nb = nbBillets.get(b);
+        if (nb == null)
+            nb = 0;
+        nbBillets.put(b, ++nb);
     }
 
     public void addBillet(Billet b, int nb)

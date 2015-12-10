@@ -5,5 +5,6 @@ public enum Action {
     OFFRE,
     CONTRE_OFFRE,
     REFUS,
-    ACCEPTATION
+    ACCEPTATION,
+    VERIF_ACCEPT
 }
