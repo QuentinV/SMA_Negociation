@@ -169,26 +169,34 @@ public class AgFournisseur extends Agent {
                                 this.sendRefus(neg, m, timeNow);
                             } else
                             { //Remonter prix
-                                double offreBase = m.getContent().getOffreFournisseur();
-                                double coClient = m.getContent().getOffreClient();
-                                double diff = offreBase - coClient; //offre client tjs inférieure
+                                if (m.getContent().getOffreFournisseur() != m.getContent().getOffreClient())
+                                {
+                                    double offreBase = m.getContent().getOffreFournisseur();
+                                    double coClient = m.getContent().getOffreClient();
+                                    double diff = offreBase - coClient; //offre client tjs inférieure
 
-                                //diminuer l'offre de base de 20% selon l'écart entre les offres
-                                double co = Math.round(offreBase - diff * 20 / 100);
+                                    //diminuer l'offre de base de 20% selon l'écart entre les offres
+                                    double co = Math.round(offreBase - diff * 20 / 100);
 
-                                Message messageToSent = new Message(
-                                        this,
-                                        m.getEmetteur(),
-                                        new MessageContent(
-                                            Action.CONTRE_OFFRE,
-                                            co,
-                                            m.getContent().getOffreClient(),
-                                            m.getContent().getDestination()
-                                        )
-                                );
-                                MailBox.send(messageToSent);
+                                    if (m.getContent().getOffreFournisseur() == co && m.getContent().getOffreClient() >= seuil)
+                                    {
+                                        co = m.getContent().getOffreClient(); //s'aligner avec le négociateur
+                                    }
 
-                                this.console("Envoi contre offre "+String.valueOf(co)+" to "+m.getEmetteur());
+                                    Message messageToSent = new Message(
+                                            this,
+                                            m.getEmetteur(),
+                                            new MessageContent(
+                                                    Action.CONTRE_OFFRE,
+                                                    co,
+                                                    m.getContent().getOffreClient(),
+                                                    m.getContent().getDestination()
+                                            )
+                                    );
+                                    MailBox.send(messageToSent);
+
+                                    this.console("Envoi contre offre " + String.valueOf(co) + " to " + m.getEmetteur());
+                                }
                             }
                         }
                     } else

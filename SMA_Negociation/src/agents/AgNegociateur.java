@@ -136,16 +136,25 @@ public class AgNegociateur extends Agent {
                                 case OFFRE:
                                     prix = Math.round(prixSeuil);
                                     this.console("Traitement offre from "+f+" envoi seuil "+String.valueOf(prix));
+                                    this.sendMess(f, Action.CONTRE_OFFRE, m.getContent().getOffreFournisseur(), prix);
                                     break;
                                 case CONTRE_OFFRE:
-                                    double diff = m.getContent().getOffreFournisseur() - m.getContent().getOffreClient();
-                                    //augmentation de l'offre de base
-                                    prix = Math.round(m.getContent().getOffreClient() + this.percentAugmPrix * diff / 100);
-                                    this.console("Traitement contre offre from "+f+" = "+String.valueOf(prix));
+                                    if (m.getContent().getOffreClient() != m.getContent().getOffreFournisseur())
+                                    {
+                                        double diff = m.getContent().getOffreFournisseur() - m.getContent().getOffreClient();
+
+                                        //augmentation de l'offre de base
+                                        prix = Math.round(m.getContent().getOffreClient() + this.percentAugmPrix * diff / 100);
+                                        if (m.getContent().getOffreClient() == prix && m.getContent().getOffreFournisseur() <= c.getBudget())
+                                        { //meme prix que precedement
+                                            prix = m.getContent().getOffreFournisseur(); //s'aligner avec l'offre du fournisseur
+                                        }
+
+                                        this.console("Traitement contre offre from " + f + " = " + String.valueOf(prix));
+                                        this.sendMess(f, Action.CONTRE_OFFRE, m.getContent().getOffreFournisseur(), prix);
+                                    }
                                     break;
                             }
-
-                            this.sendMess(f, Action.CONTRE_OFFRE, m.getContent().getOffreFournisseur(), prix);
                         }
                     }
                 }
