@@ -1,11 +1,18 @@
 package agents;
 
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
 public abstract class Agent extends Thread {
     protected static final int MAX_MESS_NEGOCIATION = 5;
 
     protected void console(String m)
     {
-        System.out.println(this+ " >> "+m);
+        Calendar c = Calendar.getInstance();
+        String date = c.get(Calendar.HOUR) + ":"+c.get(Calendar.MINUTE) +":"+ c.get(Calendar.SECOND);
+
+        System.out.println(this+ " ("+date+") >> "+m);
     }
 
     @Override

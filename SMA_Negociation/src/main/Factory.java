@@ -126,6 +126,24 @@ public class Factory {
         return true;
     }
 
+    public static ReturnAgents scenarioRefus()
+    {
+        Billet b1 = Factory.createBillet(Destination.Lyon, 0, 60, 500);
+
+        //Compagnies
+        Compagnie co1 = Factory.createCompagnie("CO1", 60, b1);
+        Compagnie co2 = Factory.createCompagnie("CO2", 85, b1); //seuil de refus élevé
+        List<AgFournisseur> listAgF = Factory.createFournisseurs(20, co1, co2);
+
+        //Clients
+        Client c1 = Factory.createClient("CL1", 450, 88, Destination.Lyon, 30);
+
+        List<AgNegociateur> listAgN = Factory.createNegociateurs(20, listAgF, c1);
+
+        //AGENTS
+        return new ReturnAgents(listAgF, listAgN);
+    }
+
     public static ReturnAgents scenarioDepart()
     {
         //prix base = 500 ou 400

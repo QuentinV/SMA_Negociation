@@ -5,9 +5,12 @@ import agents.Agent;
 public class Main {
     public static void main(String[] args) {
         Factory.ReturnAgents agents = Factory.scenarioDepart();
+        //Factory.ReturnAgents agents = Factory.scenarioRefus();
+
+        //Démarrer les threads
         Factory.startThread(agents);
 
-        //Wait
+        //Attendre la fin des négociateurs
         for (Agent a : agents.getAgN())
             try {
                 a.join();
@@ -17,6 +20,7 @@ public class Main {
 
         System.out.println("fin");
 
+        //Terminer tous les threads restant des fournisseurs
         System.exit(0);
     }
 }

@@ -85,7 +85,7 @@ public class AgFournisseur extends Agent {
                 this,
                 m.getEmetteur(),
                 new MessageContent(
-                        Action.CONTRE_OFFRE,
+                        Action.REFUS,
                         0,
                         0,
                         m.getContent().getDestination()
