@@ -18,7 +18,7 @@ public class AgFournisseur extends Agent {
     private Map<AgNegociateur, Message> negociateurs;   //sauvegarde des messages
     private Map<AgNegociateur, Billet> negBillets;      //sauvegarde billet en cours de negociation
 
-    private double percentDimPrix;
+    private double percentDimPrix;  //utilisée dans contre offre
 
     public AgFournisseur(Compagnie compagnie, double percentDimPrix) {
         this.negociateurs = new HashMap<>();

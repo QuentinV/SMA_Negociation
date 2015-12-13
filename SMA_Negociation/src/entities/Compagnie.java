@@ -8,7 +8,7 @@ public class Compagnie {
     private String nom;
     private Map<Billet, Integer> nbBillets;
 
-    private double maxPercentNegoc;
+    private double maxPercentNegoc; //seuil d'arrêt de negociation (pourcentage du prix du billet)
 
     public Compagnie(String nom, double maxPercentNegoc)
     {

@@ -15,7 +15,7 @@ public class AgNegociateur extends Agent {
     private List<AgFournisseur> baseFournisseurs;
     private Map<AgFournisseur, Message> fournisseurs;
 
-    private double percentAugmPrix;
+    private double percentAugmPrix; //utilisé dans contre offre
     private boolean startNegociation;
 
     public AgNegociateur(Client c, double percentAugmPrix, List<AgFournisseur> env) {

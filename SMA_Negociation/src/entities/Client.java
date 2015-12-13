@@ -7,7 +7,7 @@ public class Client {
     private List<Compagnie> companiesAvoid;
 
     private double budget;
-    private double maxPercentNegoc;
+    private double maxPercentNegoc; //seuil où le client accepte directement la negociation (pourcentage du budget)
 
     private Destination destination;
     private Date dateAchatMax;

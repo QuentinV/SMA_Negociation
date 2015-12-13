@@ -5,8 +5,8 @@ import entities.Destination;
 public class MessageContent {
     private Action action;
 
-    private double offreFournisseur;
-    private double offreClient;
+    private double offreFournisseur;  //last offer fournisseur
+    private double offreClient;     //last offer client
 
     private Destination destination;
 
